@@ -4,6 +4,11 @@ import uvicorn
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel
+import joblib
+import time
+import logging
+
+boot_time = time.time()
 
 model = joblib.load('model/PricePredictor.pkl')
 oe = joblib.load('model/OrdEncoder.pkl')
@@ -14,9 +19,20 @@ app = FastAPI(
     version = '1.0.0'
 )
 
+@app.on_event("startup")
+async def startup_event():
+    ready_time = time.time()
+    startup_duration = ready_time - boot_time
+    logging.basicConfig(level=logging.INFO)
+    logging.info(f"✅ API server startup completed in {startup_duration:.2f} seconds")
+    
 @app.get("/")
 def read_root():
     return {"message": "Hello from FastAPI on Render!"}
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
 
 # Define the input data structure
 class DiamondData(BaseModel):
